@@ -1,11 +1,48 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const WebpackPwaManifest = require('webpack-pwa-manifest');
 const path = require('path');
-const { InjectManifest } = require('workbox-webpack-plugin');
+const { GenerateSW, InjectManifest } = require('workbox-webpack-plugin');
 
-module.exports = () => {
+module.exports = (env, argv) => {
+  const isDevelopment = argv.mode === 'development';
+
+  const plugins = [
+    new HtmlWebpackPlugin({
+      template: './index.html',
+      title: 'JATE',
+    }),
+    new WebpackPwaManifest({
+      fingerprints: false,
+      inject: true,
+      name: 'Just Another Text Editor',
+      short_name: 'JATE',
+      description: 'An application for editing text',
+      background_color: '#225ca3',
+      theme_color: '#225ca3',
+      start_url: '/',
+      publicPath: '/',
+      icons: [
+        {
+          src: path.resolve('src/images/logo.png'),
+          sizes: [96, 128, 192, 256, 384, 512],
+          destination: path.join('assets', 'icons'),
+        },
+      ],
+    }),
+  ];
+
+  if (!isDevelopment) {
+    // Add GenerateSW only in production mode
+    plugins.push(
+      new GenerateSW({
+        swDest: 'src-sw.js',
+        exclude: [/\.map$/, /assets\//],
+      })
+    );
+  }
+
   return {
-    mode: 'development',
+    mode: isDevelopment ? 'development' : 'production',
     entry: {
       main: './src/js/index.js',
       install: './src/js/install.js',
@@ -15,34 +52,7 @@ module.exports = () => {
       path: path.resolve(__dirname, 'dist'),
       publicPath: '/',
     },
-    plugins: [
-      new HtmlWebpackPlugin({
-        template: './index.html',
-        title: 'JATE',
-      }),
-      new InjectManifest({
-        swSrc: './src-sw.js',
-        swDest: 'service-worker.js',
-      }),
-      new WebpackPwaManifest({
-        fingerprints: false,
-        inject: true,
-        name: 'Just Another Text Editor',
-        short_name: 'JATE',
-        description: 'An application for editing text',
-        background_color: '#225ca3',
-        theme_color: '#225ca3',
-        start_url: '/',
-        publicPath: '/',
-        icons: [
-          {
-            src: path.resolve('src/images/logo.png'),
-            sizes: [96, 128, 192, 256, 384, 512],
-            destination: path.join('assets', 'icons'),
-          },
-        ],
-      }),
-    ],
+    plugins,
     module: {
       rules: [
         {
