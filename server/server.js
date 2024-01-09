@@ -1,9 +1,12 @@
 const express = require('express');
+const path = require('path'); // Import the 'path' module
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static('../client/dist'));
+// Use an absolute path to serve static files
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
